@@ -422,12 +422,7 @@
         <h2 class="section-title">Abrimos cabina<br>a la escena local</h2>
         <p>Loop nace también para dar espacio a quienes están construyendo la electrónica de la isla. Si tienes un set que suena a ti, mándanoslo — puede acabar sonando en nuestra cabina.</p>
       </div>
-      <form class="reveal" id="djForm" name="dj-application" method="POST" data-netlify="true" netlify-honeypot="bot-field-dj">
-        <input type="hidden" name="form-name" value="dj-application">
-        <p style="position:absolute; left:-9999px;">
-          <label>No rellenar: <input name="bot-field-dj" tabindex="-1" autocomplete="off"></label>
-        </p>
-
+      <form class="reveal" id="djForm">
         <div class="field">
           <label for="dj-nombre">Nombre artístico</label>
           <input type="text" id="dj-nombre" name="nombre" required>
@@ -468,12 +463,7 @@
         <h2 class="section-title">Asegura<br>tu mesa</h2>
         <p>Aforo limitado, por orden de llegada. Confirma los datos y te contestamos por WhatsApp o email a la mayor brevedad.</p>
       </div>
-      <form class="reveal" id="reservaForm" name="reserva" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="reserva">
-        <p style="position:absolute; left:-9999px;">
-          <label>No rellenar: <input name="bot-field" tabindex="-1" autocomplete="off"></label>
-        </p>
-
+      <form class="reveal" id="reservaForm">
         <div class="field">
           <label for="nombre">Nombre completo</label>
           <input type="text" id="nombre" name="nombre" required>
@@ -503,7 +493,6 @@
   <!-- FOOTER -->
   <footer>
     <div class="footer-brand">
-            <p class="footer-tag"></p>
       <img src="assets/LogoSinFondo.png" alt="Loop DJ Lab" class="footer-logo">
 
     </div>
@@ -562,63 +551,50 @@
 
     revealEls.forEach(el => observer.observe(el));
 
-    function encode(data) {
-      return Object.keys(data)
-        .map(key => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
-        .join("&");
-    }
+        // --- ENVÍO DE FORMULARIOS POR WHATSAPP ---
+    const WHATSAPP_NUMBER = '34689851491';
 
-    function handleFormSubmit(form, statusEl, successMsg, errorMsg) {
+    function sendToWhatsApp(form, statusEl, buildMessage, successMsg) {
       if (!form) return;
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        const submitBtn = form.querySelector('.submit-btn');
+        const text = buildMessage(data);
+        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 
-        statusEl.textContent = 'Enviando...';
+        statusEl.textContent = 'Abriendo WhatsApp...';
         statusEl.style.color = 'var(--paper)';
-        if (submitBtn) submitBtn.disabled = true;
 
-        fetch("/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: encode(data),
-        })
-        .then(() => {
+        window.open(url, '_blank');
+
+        setTimeout(() => {
           statusEl.textContent = successMsg;
           statusEl.style.color = '#4CAF50';
           form.reset();
-        })
-        .catch(() => {
-          statusEl.textContent = errorMsg;
-          statusEl.style.color = '#f44336';
-        })
-        .finally(() => {
-          if (submitBtn) submitBtn.disabled = false;
-        });
+        }, 400);
       });
     }
 
-    handleFormSubmit(
+    sendToWhatsApp(
       document.getElementById('avisoForm'),
       document.getElementById('avisoFormStatus'),
-      '✓ Perfecto, te avisamos en cuanto anunciemos la próxima.',
-      'No hemos podido enviarlo. Prueba otra vez o escríbenos por WhatsApp.'
+      (d) => `Hola! Quiero que me avisen de la próxima noche de Loop.\n\nContacto: ${d.contacto}`,
+      '✓ Te escribimos por ahí para confirmarlo.'
     );
 
-    handleFormSubmit(
+    sendToWhatsApp(
       document.getElementById('reservaForm'),
       document.getElementById('formStatus'),
-      '✓ Solicitud recibida. Te confirmamos disponibilidad en breve.',
-      'Ha habido un problema. Vuelve a intentarlo o escríbenos por WhatsApp.'
+      (d) => `Hola! Quiero reservar mesa en Loop DJ Lab.\n\nNombre: ${d.nombre}\nFecha: ${d.fecha}\nPersonas: ${d.personas}\nTipo de reserva: ${d.tipo}\nContacto: ${d.contacto}`,
+      '✓ Confirma el envío en WhatsApp para completar tu reserva.'
     );
 
-    handleFormSubmit(
+    sendToWhatsApp(
       document.getElementById('djForm'),
       document.getElementById('djFormStatus'),
-      '✓ Set recibido. Si encaja con lo que buscamos para Loop, te escribimos.',
-      'No hemos podido enviarlo. Prueba otra vez o escríbenos por WhatsApp.'
+      (d) => `Hola! Quiero proponer mi set para DJ Lab.\n\nNombre artístico: ${d.nombre}\nGénero: ${d.genero}\nContacto: ${d.contacto}\nLink al set: ${d.link}`,
+      '✓ Confirma el envío en WhatsApp para completar tu propuesta.'
     );
   </script>
 
